@@ -78,12 +78,44 @@ h1 {
     margin-bottom: 50px;
 }
 
-.repo-title {
-    font-size: 1.8rem;
-    color: #333;
+.repo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
     padding-bottom: 10px;
     border-bottom: 2px solid #eee;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.repo-title {
+    font-size: 1.8rem;
+    color: #333;
+    margin: 0;
+}
+
+.github-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.github-link:hover {
+    color: #333;
+    border-color: #999;
+    background: #f8f9fa;
+}
+
+.github-icon {
+    font-size: 1rem;
 }
 
 .releases-grid {
@@ -250,6 +282,11 @@ h1 {
     
     .main-content {
         padding: 20px;
+    }
+    
+    .repo-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
     
     .releases-grid {
