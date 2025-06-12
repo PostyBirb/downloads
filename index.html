@@ -189,7 +189,7 @@
         function renderDownloads(releases, config) {
             const currentOS = detectOS();
             
-            return releases.map(release => {
+            return releases.map((release, index) => {
                 const assets = release.assets.filter(asset => 
                     !asset.name.includes('.blockmap') && 
                     !asset.name.includes('.sig') &&
@@ -253,9 +253,12 @@
                 }).join('');
 
                 return `
-                    <div class="release-card">
+                    <div class="release-card${index === 0 ? ' latest-release' : ''}">
                         <div class="release-header">
-                            <h3 class="release-version">${release.tag_name}</h3>
+                            <div class="release-title-container">
+                                <h3 class="release-version">${release.tag_name}</h3>
+                                ${index === 0 ? '<span class="latest-badge">Latest</span>' : ''}
+                            </div>
                             <p class="release-date">${formatDate(release.published_at)}</p>
                         </div>
                         <ul class="downloads-list">
