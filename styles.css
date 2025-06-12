@@ -114,6 +114,11 @@ h1 {
     background: #f8f9fa;
 }
 
+.github-link:focus {
+    outline: 2px solid #4facfe;
+    outline-offset: 2px;
+}
+
 .github-icon {
     font-size: 1rem;
 }
@@ -131,6 +136,7 @@ h1 {
     padding: 25px;
     border: 1px solid #e9ecef;
     transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .release-card:hover {
@@ -180,6 +186,11 @@ h1 {
     letter-spacing: 0.5px;
 }
 
+.latest-badge:focus {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
 .release-date {
     color: #666;
     font-size: 0.9rem;
@@ -195,11 +206,17 @@ h1 {
     margin-bottom: 12px;
 }
 
+.download-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
 .download-button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
+    flex: 1;
     padding: 12px 16px;
     background: white;
     border: 2px solid #e9ecef;
@@ -208,6 +225,35 @@ h1 {
     color: #333;
     transition: all 0.2s;
     font-size: 0.95rem;
+}
+
+.download-button:focus {
+    outline: 2px solid #4facfe;
+    outline-offset: 2px;
+}
+
+.copy-link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: auto;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.copy-link-btn:hover {
+    background: #e9ecef;
+    border-color: #6c757d;
+}
+
+.copy-link-btn:focus {
+    outline: 2px solid #4facfe;
+    outline-offset: 2px;
 }
 
 .download-button:hover {
@@ -262,6 +308,115 @@ h1 {
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+}
+
+.download-count {
+    color: #666;
+    font-size: 0.75rem;
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.download-button.compatible .download-count {
+    background: #d4edda;
+    color: #155724;
+}
+
+.download-button.recommended .download-count {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.downloads-title {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.release-notes {
+    margin-top: 15px;
+    border-top: 1px solid #e9ecef;
+    padding-top: 15px;
+}
+
+.release-notes summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+    padding: 5px 0;
+}
+
+.release-notes summary:hover {
+    color: #4facfe;
+}
+
+.release-notes-content {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.error-state {
+    text-align: center;
+    padding: 60px 40px;
+    color: #dc3545;
+}
+
+.retry-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 15px;
+    transition: background 0.2s;
+}
+
+.retry-button:hover {
+    background: #0056b3;
+}
+
+.repo-error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    color: #721c24;
+}
+
+.error-details {
+    margin-top: 10px;
+}
+
+.error-details code {
+    background: #f1f3f4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .download-size {
@@ -324,7 +479,75 @@ h1 {
         flex-wrap: wrap;
     }
     
+    .download-wrapper {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .copy-link-btn {
+        width: 100%;
+        height: 36px;
+    }
+    
     .releases-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Focus and keyboard navigation improvements */
+.download-button:focus {
+    outline: 2px solid #4facfe;
+    outline-offset: 2px;
+}
+
+.github-link:focus {
+    outline: 2px solid #4facfe;
+    outline-offset: 2px;
+}
+
+.latest-badge:focus {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+/* Improved loading animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.release-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .download-button.compatible {
+        border-width: 3px;
+    }
+    
+    .download-button.recommended {
+        border-width: 3px;
+    }
+    
+    .latest-badge {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .download-button:hover {
+        transform: none;
+    }
+    
+    .release-card:hover {
+        transform: none;
     }
 }

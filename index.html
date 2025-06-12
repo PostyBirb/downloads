@@ -4,26 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta name="description" content="Download PostyBirb releases">
-    <title>PostyBirb Downloads</title>
+    <meta name="description" content="Download the latest PostyBirb releases for Windows, macOS, and Linux.">
+    <meta name="keywords" content="PostyBirb, download, social media, Windows, macOS, Linux, app, release">
+    <meta name="author" content="PostyBirb">
+    <meta property="og:title" content="PostyBirb Downloads">
+    <meta property="og:description" content="Download the latest PostyBirb releases for all platforms">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://avatars.githubusercontent.com/u/195112659?s=160">
+    <title>PostyBirb Downloads - Latest Releases for All Platforms</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="https://avatars.githubusercontent.com/u/195112659?s=32">
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <header class="header">
             <img src="https://avatars.githubusercontent.com/u/195112659?s=160" alt="PostyBirb Logo" class="logo">
             <h1>PostyBirb Downloads</h1>
             <p class="subtitle">Download the latest releases for all platforms</p>
-        </div>
+        </header>
         
-        <div class="main-content">
-            <div id="loading" class="loading">
+        <main class="main-content">
+            <div id="loading" class="loading" role="status" aria-label="Loading releases">
                 <div class="spinner"></div>
                 <p>Loading releases...</p>
             </div>
             
-            <div id="content" style="display: none;"></div>
-        </div>
+            <div id="content" style="display: none;" role="main"></div>
+            
+            <div id="error-state" class="error-state" style="display: none;" role="alert">
+                <h3>Unable to Load Releases</h3>
+                <p>Please check your internet connection and try again.</p>
+                <button class="retry-button" onclick="loadDownloads()">Retry</button>
+            </div>
+        </main>
     </div>
 
     <script>
@@ -100,6 +113,7 @@
             } else if (platform.includes('linux') || userAgent.includes('linux') || userAgent.includes('x11')) {
                 return 'linux';
             }
+            
             return 'unknown';
         }
 
@@ -160,6 +174,30 @@
             }
             
             return info.length > 0 ? info.join(' • ') : '';
+        }
+
+        async function copyToClipboard(text, buttonElement) {
+            try {
+                await navigator.clipboard.writeText(text);
+                const originalText = buttonElement.textContent;
+                buttonElement.textContent = '✓ Copied!';
+                buttonElement.style.background = '#28a745';
+                setTimeout(() => {
+                    buttonElement.textContent = originalText;
+                    buttonElement.style.background = '';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+            }
+        }
+
+        function formatDownloadCount(count) {
+            if (count >= 1000000) {
+                return (count / 1000000).toFixed(1) + 'M';
+            } else if (count >= 1000) {
+                return (count / 1000).toFixed(1) + 'K';
+            }
+            return count.toString();
         }
 
         // GitHub API functions
@@ -226,45 +264,73 @@
                     const icon = getFileIcon(asset.name);
                     const isCompatible = isCompatibleWithCurrentOS(downloadConfig, currentOS);
                     const osInfo = formatOSInfo(downloadConfig);
+                    const downloadCount = asset.download_count ? formatDownloadCount(asset.download_count) : '';
                     
                     const classes = ['download-button'];
                     if (isCompatible) classes.push('compatible');
                     if (downloadConfig.recommended && isCompatible) classes.push('recommended');
                     
+                    const ariaLabel = `Download ${downloadConfig.name} for ${downloadConfig.os}, ${formatFileSize(asset.size)}${isCompatible ? ', recommended for your system' : ''}`;
+                    
                     return `
                         <li class="download-item">
-                            <a href="${asset.browser_download_url}" class="${classes.join(' ')}" target="_blank" rel="noopener">
-                                <div class="download-info">
-                                    <span class="download-icon">${icon}</span>
-                                    <div>
-                                        <div class="download-name">
-                                            ${downloadConfig.name}
-                                        </div>
-                                        <div class="download-details">
-                                            <span class="download-size">${formatFileSize(asset.size)}</span>
-                                            ${osInfo ? `<span class="os-info">${osInfo}</span>` : ''}
+                            <div class="download-wrapper">
+                                <a href="${asset.browser_download_url}" 
+                                   class="${classes.join(' ')}" 
+                                   target="_blank" 
+                                   rel="noopener"
+                                   aria-label="${ariaLabel}"
+                                   data-download-name="${downloadConfig.name}">
+                                    <div class="download-info">
+                                        <span class="download-icon" aria-hidden="true">${icon}</span>
+                                        <div class="download-text">
+                                            <div class="download-name">
+                                                ${downloadConfig.name}
+                                                ${downloadConfig.recommended && isCompatible ? '<span class="sr-only"> (Recommended)</span>' : ''}
+                                            </div>
+                                            <div class="download-details">
+                                                <span class="download-size">${formatFileSize(asset.size)}</span>
+                                                ${downloadCount ? `<span class="download-count">${downloadCount} downloads</span>` : ''}
+                                                ${osInfo ? `<span class="os-info">${osInfo}</span>` : ''}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <span>⬇️</span>
-                            </a>
+                                    <span class="download-arrow" aria-hidden="true">⬇️</span>
+                                </a>
+                                <button class="copy-link-btn" 
+                                        onclick="copyToClipboard('${asset.browser_download_url}', this)"
+                                        aria-label="Copy download link to clipboard"
+                                        title="Copy download link">
+                                    📋
+                                </button>
+                            </div>
                         </li>
                     `;
                 }).join('');
 
                 return `
-                    <div class="release-card${index === 0 ? ' latest-release' : ''}">
-                        <div class="release-header">
+                    <article class="release-card${index === 0 ? ' latest-release' : ''}" 
+                             itemscope itemtype="https://schema.org/SoftwareApplication">
+                        <header class="release-header">
                             <div class="release-title-container">
-                                <h3 class="release-version">${release.tag_name}</h3>
-                                ${index === 0 ? '<span class="latest-badge">Latest</span>' : ''}
+                                <h3 class="release-version" itemprop="version">${release.tag_name}</h3>
+                                ${index === 0 ? '<span class="latest-badge" aria-label="Latest release">Latest</span>' : ''}
                             </div>
-                            <p class="release-date">${formatDate(release.published_at)}</p>
+                            <time class="release-date" datetime="${release.published_at}" itemprop="datePublished">
+                                ${formatDate(release.published_at)}
+                            </time>
+                        </header>
+                        <div class="downloads-section">
+                            <h4 class="downloads-title sr-only">Available downloads for ${release.tag_name}</h4>
+                            <ul class="downloads-list" role="list">
+                                ${downloadsHtml}
+                            </ul>
                         </div>
-                        <ul class="downloads-list">
-                            ${downloadsHtml}
-                        </ul>
-                    </div>
+                        ${release.body ? `<details class="release-notes">
+                            <summary>Release Notes</summary>
+                            <div class="release-notes-content">${release.body.substring(0, 300)}${release.body.length > 300 ? '...' : ''}</div>
+                        </details>` : ''}
+                    </article>
                 `;
             }).join('');
         }
@@ -293,38 +359,51 @@
         async function loadDownloads() {
             const loadingEl = document.getElementById('loading');
             const contentEl = document.getElementById('content');
+            const errorEl = document.getElementById('error-state');
+
+            // Show loading state
+            loadingEl.style.display = 'block';
+            contentEl.style.display = 'none';
+            errorEl.style.display = 'none';
 
             try {
                 let allContent = '';
+                let hasContent = false;
 
                 for (const repoConfig of CONFIG.repos) {
                     try {
                         const releases = await fetchReleases(repoConfig.owner, repoConfig.repo, repoConfig);
-                        allContent += renderRepo(repoConfig, releases);
+                        if (releases.length > 0) {
+                            allContent += renderRepo(repoConfig, releases);
+                            hasContent = true;
+                        }
                     } catch (error) {
+                        console.error(`Error loading ${repoConfig.displayName}:`, error);
                         allContent += `
-                            <div class="error">
+                            <div class="repo-error" role="alert">
                                 <h3>Error loading ${repoConfig.displayName}</h3>
-                                <p>Could not fetch releases. Please try again later.</p>
+                                <p>Could not fetch releases. This might be due to rate limiting or network issues.</p>
+                                <details class="error-details">
+                                    <summary>Technical details</summary>
+                                    <code>${error.message}</code>
+                                </details>
                             </div>
                         `;
                     }
                 }
 
-                contentEl.innerHTML = allContent;
-                loadingEl.style.display = 'none';
-                contentEl.style.display = 'block';
+                if (hasContent) {
+                    contentEl.innerHTML = allContent;
+                    loadingEl.style.display = 'none';
+                    contentEl.style.display = 'block';
+                } else {
+                    throw new Error('No releases could be loaded');
+                }
 
             } catch (error) {
                 console.error('Error loading downloads:', error);
-                contentEl.innerHTML = `
-                    <div class="error">
-                        <h3>Error Loading Downloads</h3>
-                        <p>Please check your internet connection and try refreshing the page.</p>
-                    </div>
-                `;
                 loadingEl.style.display = 'none';
-                contentEl.style.display = 'block';
+                errorEl.style.display = 'block';
             }
         }
 
