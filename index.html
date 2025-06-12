@@ -35,16 +35,50 @@
                     repo: 'postybirb-plus',
                     displayName: 'PostyBirb Plus',
                     filenameMappings: {
-                        'PostyBirb\\+-{version}-universal\\.dmg': 'macOS Universal (DMG)',
-                        'postybirb-plus-{version}-x86_64\\.AppImage': 'Linux (AppImage)',
-                        'postybirb-plus-{version}\\.exe': 'Windows Portable (EXE)',
-                        'postybirb-plus-setup-{version}\\.exe': 'Windows Installer'
+                        'PostyBirb\\+-{version}-universal\\.dmg': {
+                            name: 'macOS Universal (DMG)',
+                            os: 'macos',
+                            osVersions: ['10.15+'],
+                            recommended: true
+                        },
+                        'postybirb-plus-{version}-x86_64\\.AppImage': {
+                            name: 'Linux (AppImage)',
+                            os: 'linux',
+                            distros: ['Universal'],
+                            recommended: true
+                        },
+                        'postybirb-plus-{version}\\.exe': {
+                            name: 'Windows Portable (EXE)',
+                            os: 'windows',
+                            osVersions: ['7+'],
+                            recommended: false
+                        },
+                        'postybirb-plus-setup-{version}\\.exe': {
+                            name: 'Windows Installer',
+                            os: 'windows',
+                            osVersions: ['7+'],
+                            recommended: true
+                        }
                     }
                 }
             ]
         };
 
         // Utility functions
+        function detectOS() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const platform = navigator.platform.toLowerCase();
+            
+            if (platform.includes('mac') || userAgent.includes('mac')) {
+                return 'macos';
+            } else if (platform.includes('win') || userAgent.includes('win')) {
+                return 'windows';
+            } else if (platform.includes('linux') || userAgent.includes('linux') || userAgent.includes('x11')) {
+                return 'linux';
+            }
+            return 'unknown';
+        }
+
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -77,13 +111,31 @@
         }
 
         function getReadableName(filename, mappings, version) {
-            for (const [pattern, readableName] of Object.entries(mappings)) {
+            for (const [pattern, config] of Object.entries(mappings)) {
                 const regex = new RegExp(pattern.replace('{version}', version.replace(/^v/, '')), 'i');
                 if (regex.test(filename)) {
-                    return readableName;
+                    return config;
                 }
             }
-            return filename;
+            return { name: filename, os: 'unknown', recommended: false };
+        }
+
+        function isCompatibleWithCurrentOS(downloadConfig, currentOS) {
+            return downloadConfig.os === currentOS || downloadConfig.os === 'unknown';
+        }
+
+        function formatOSInfo(downloadConfig) {
+            let info = [];
+            
+            if (downloadConfig.osVersions && downloadConfig.osVersions.length > 0) {
+                info.push(`${downloadConfig.osVersions.join(', ')}`);
+            }
+            
+            if (downloadConfig.distros && downloadConfig.distros.length > 0) {
+                info.push(`${downloadConfig.distros.join(', ')}`);
+            }
+            
+            return info.length > 0 ? info.join(' • ') : '';
         }
 
         // GitHub API functions
@@ -100,6 +152,8 @@
 
         // Render functions
         function renderDownloads(releases, config) {
+            const currentOS = detectOS();
+            
             return releases.map(release => {
                 const assets = release.assets.filter(asset => 
                     !asset.name.includes('.blockmap') && 
@@ -112,18 +166,49 @@
 
                 if (assets.length === 0) return '';
 
-                const downloadsHtml = assets.map(asset => {
-                    const readableName = getReadableName(asset.name, config.filenameMappings, release.tag_name);
+                // Sort assets to show compatible ones first
+                const sortedAssets = assets.sort((a, b) => {
+                    const aConfig = getReadableName(a.name, config.filenameMappings, release.tag_name);
+                    const bConfig = getReadableName(b.name, config.filenameMappings, release.tag_name);
+                    
+                    const aCompatible = isCompatibleWithCurrentOS(aConfig, currentOS);
+                    const bCompatible = isCompatibleWithCurrentOS(bConfig, currentOS);
+                    
+                    if (aCompatible && !bCompatible) return -1;
+                    if (!aCompatible && bCompatible) return 1;
+                    
+                    // Among compatible downloads, prioritize recommended ones
+                    if (aCompatible && bCompatible) {
+                        if (aConfig.recommended && !bConfig.recommended) return -1;
+                        if (!aConfig.recommended && bConfig.recommended) return 1;
+                    }
+                    
+                    return 0;
+                });
+
+                const downloadsHtml = sortedAssets.map(asset => {
+                    const downloadConfig = getReadableName(asset.name, config.filenameMappings, release.tag_name);
                     const icon = getFileIcon(asset.name);
+                    const isCompatible = isCompatibleWithCurrentOS(downloadConfig, currentOS);
+                    const osInfo = formatOSInfo(downloadConfig);
+                    
+                    const classes = ['download-button'];
+                    if (isCompatible) classes.push('compatible');
+                    if (downloadConfig.recommended && isCompatible) classes.push('recommended');
                     
                     return `
                         <li class="download-item">
-                            <a href="${asset.browser_download_url}" class="download-button" target="_blank" rel="noopener">
+                            <a href="${asset.browser_download_url}" class="${classes.join(' ')}" target="_blank" rel="noopener">
                                 <div class="download-info">
                                     <span class="download-icon">${icon}</span>
                                     <div>
-                                        <div class="download-name">${readableName}</div>
-                                        <div class="download-size">${formatFileSize(asset.size)}</div>
+                                        <div class="download-name">
+                                            ${downloadConfig.name}
+                                        </div>
+                                        <div class="download-details">
+                                            <span class="download-size">${formatFileSize(asset.size)}</span>
+                                            ${osInfo ? `<span class="os-info">${osInfo}</span>` : ''}
+                                        </div>
                                     </div>
                                 </div>
                                 <span>⬇️</span>
