@@ -15,7 +15,7 @@ async function fetchReleases(owner, repo, config, count = 20) {
         }
         
         // Return only the first 4 after filtering
-        return releases.slice(0, 4);
+        return releases.slice(0, 3);
     } catch (error) {
         console.error(`Error fetching releases for ${owner}/${repo}:`, error);
         throw error;
